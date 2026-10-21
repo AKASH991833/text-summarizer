@@ -31,3 +31,19 @@ Vanilla HTML/CSS/JS, hand-rolled sentence tokenizer, graph ranking and readabili
 ```bash
 python3 -m http.server 8000
 ```
+
+---
+
+## 🐍 Python version (real ML backend) - `python-app/`
+
+The browser demo above is fully client-side. This folder is the **pro-grade version** with a real training pipeline on real data:
+
+Abstractive summarization with a fine-tuned T5: paste long articles, get a compressed gist with length and style controls. Stack: Python, Gradio, Transformers (CPU).
+
+```bash
+cd python-app
+pip install -r requirements.txt
+python app.py
+```
+
+Deploy free on **Hugging Face Spaces** (no card): create a Space, upload the `python-app/` folder - it ships Space-ready (`sdk` + `app_file` already set in its README).
