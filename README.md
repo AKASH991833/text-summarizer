@@ -4,7 +4,7 @@ Paste an article and get a tight extractive summary, powered by TextRank - the g
 
 **Live demo: https://akash991833.github.io/text-summarizer/**
 
-![Summary](docs/screenshot-desktop.png)
+![Summary](screenshots/desktop-light.png)
 
 ## Features
 
@@ -16,7 +16,7 @@ Paste an article and get a tight extractive summary, powered by TextRank - the g
 - **Sample article, one-click copy, .txt download.**
 - **Dark and light mode**, mobile friendly, installable PWA, fully offline.
 
-![Mobile](docs/screenshot-mobile.png)
+![Mobile](screenshots/mobile-light.png)
 
 ## Honest limits
 
