@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Text Summarizer - TextRank Extractive Summaries On-Device</title>
+<meta name="description" content="Paste an article, get a tight extractive summary with TextRank, keyword scores, sentence importance highlighting, compression stats and readability. Free, offline.">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0f2145">
+<link rel="stylesheet" href="design.css">
+<style>
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media(max-width:900px){.sum-grid{grid-template-columns:1fr}}
+#input{min-height:260px;font-size:.95rem;line-height:1.7}
+.sum-out{min-height:200px;font-size:.95rem;line-height:1.75}
+.sum-out .sent-hl{background:color-mix(in srgb,var(--accent) 16%,transparent);border-radius:4px;padding:0 2px}
+.kw{display:inline-flex;align-items:center;gap:7px;background:var(--bg-soft);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:.85rem;font-weight:600}
+.kw .bar{width:44px;height:5px;border-radius:99px;background:var(--line);overflow:hidden}
+.kw .bar i{display:block;height:100%;background:var(--accent)}
+.len-row{display:flex;align-items:center;gap:12px}
+.len-row input[type=range]{flex:1}
+.orig-view{max-height:300px;overflow:auto;font-size:.88rem;line-height:1.7;color:var(--ink-soft)}
+.orig-view mark{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--ink);border-radius:3px;padding:0 2px}
+</style>
+</head>
+<body>
+<header class="app-header"><div class="header-inner">
+  <div class="brand"><span class="brand-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg></span>Text Summarizer</div>
+  <div class="header-spacer"></div>
+  <button class="icon-btn" onclick="toggleTheme()" title="Dark / light mode" aria-label="Toggle dark mode"><svg class="moon-i" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg><svg class="sun-i" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.4"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg></button>
+</div></header>
+<main class="app-main">
+  <div class="hero">
+    <h1>Long article in, <span class="accent-word">tight summary</span> out</h1>
+    <p>Extractive summarization with the TextRank algorithm (the same family as Google's original PageRank), plus keyword scoring, sentence highlighting and readability stats. Everything on your device.</p>
+  </div>
+  <div class="sum-grid">
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 7V5h16v2M9 20h6M12 5v15"/></svg>Article text</div>
+      <div style="height:12px"></div>
+      <textarea class="input" id="input" placeholder="Paste an article, essay or notes here (aim for 100+ words)…" spellcheck="false"></textarea>
+      <div style="height:12px"></div>
+      <div class="len-row">
+        <label style="font-size:.84rem;font-weight:600;color:var(--ink-soft);white-space:nowrap">Summary length</label>
+        <input type="range" id="len" min="10" max="60" value="25">
+        <b id="lenVal" style="font-variant-numeric:tabular-nums">25%</b>
+      </div>
+      <div style="height:12px"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="sumBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>Summarize</button>
+        <button class="btn btn-ghost" id="sampleBtn">Sample article</button>
+        <button class="btn btn-ghost" id="copyBtn">Copy summary</button>
+        <button class="btn btn-ghost" id="dlBtn">Download .txt</button>
+      </div>
+      <div style="height:12px"></div>
+      <div class="stat-grid">
+        <div class="stat"><b id="stOrig">0</b><span>Words in</span></div>
+        <div class="stat"><b id="stSum">0</b><span>Words out</span></div>
+        <div class="stat"><b id="stComp">-</b><span>Compression</span></div>
+        <div class="stat"><b id="stRead">-</b><span>Flesch score</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>Summary</div>
+        <div class="card-sub">Sentences picked in original order, ranked by TextRank.</div>
+        <div style="height:12px"></div>
+        <div class="sum-out" id="summary"><span style="color:var(--ink-faint)">Your summary appears here…</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>Keywords</div>
+        <div style="height:12px"></div>
+        <div id="kw" style="display:flex;flex-wrap:wrap;gap:8px"><span style="color:var(--ink-faint);font-size:.88rem">Top words with frequency scores.</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>Why these sentences?</div>
+        <div class="card-sub">The original with chosen sentences highlighted.</div>
+        <div style="height:12px"></div>
+        <div class="orig-view" id="orig"></div>
+      </div>
+    </div>
+  </div>
+</main>
+<footer class="app-footer">Your text never leaves this page · <a href="https://github.com/AKASH991833/text-summarizer" rel="noopener">Source on GitHub</a></footer>
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
